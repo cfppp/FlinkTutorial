@@ -3,6 +3,8 @@ package com.atguigu.apitest
 import org.apache.flink.api.common.functions.{FilterFunction, MapFunction, RichMapFunction}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.api.windowing.assigners.{EventTimeSessionWindows, GlobalWindows, SlidingEventTimeWindows, TumblingEventTimeWindows}
+import org.apache.flink.streaming.api.windowing.time.Time
 
 /**
   * Copyright (c) 2018-2028 尚硅谷 All Rights Reserved 
@@ -21,8 +23,9 @@ object TransformTest {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
 
-    val inputStream = env.readTextFile("D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt")
+//    val inputStream = env.readTextFile("D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\sensor.txt")
 
+    val inputStream = env.socketTextStream("localhost", 7777)
     // 1. 简单转换和滚动聚合算子测试
     val dataStream = inputStream
       .map(data => {
@@ -31,8 +34,10 @@ object TransformTest {
       })
     val aggStream = dataStream
       .keyBy("id")
+//        .timeWindow(Time.seconds(10))
       //      .max("temperature")
-      .reduce((x, y) => SensorReading(x.id, x.timestamp + 1, y.temperature + 10))
+//      .reduce((x, y) => SensorReading(x.id, x.timestamp + 1, y.temperature + 10))
+      .min("temperature")
 
     // 2. 分流算子测试
 
@@ -64,7 +69,7 @@ object TransformTest {
 //    lowTempStream.print("low")
 //    highTempStream.print("high")
 //    allTempStream.print("all")
-    coMapStream.print("coMap stream")
+    aggStream.print("coMap stream")
 
     env.execute("transform test")
   }
